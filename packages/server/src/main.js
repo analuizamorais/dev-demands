@@ -1,78 +1,23 @@
-import { createServer }  from 'http';
-import { readFile } from 'fs';
-import { resolve } from 'path';
-import { parse } from 'querystring';
+import express, { request, response } from 'express';
 
-const server = createServer((request, response) => {
-    switch (request.url) {
-        case '/status': {
-            response.writeHead(200, {
-                'Content-Type': 'application/json',
-            });
-            response.write(
-                JSON.stringify({
-                    status: 'Okay',
-                })
-            );
-            response.end();
-            return;
-        }
-        case '/sign-in': {
-            const path = resolve(__dirname,'./pages/sign-in.html');
+const server = express();
 
-            readFile(path, (error, file) => {
-                if (error) {
-                    response.writeHead(500, "Can't process HTML file.");
-                    response.end();
-                    return;
-                }
+server.get('/status', (_, response) => {
+    response.send({
+        status: 'Okay',
+    });
+});
 
-                response.writeHead(200);
-                response.write(file);
-                response.end();
-            });
-            break;
-        }
-        case '/authenticate': {
-            let data = '';
-            request.on('data', (chunk) => {
-                data += chunk;
-            });
-            request.on('end', () => {
-                const params = parse(data);
-                response.writeHead(301, {
-                    Location: '/home',
-                });
-                response.end();
-            });
-            break;
-        }
-        case '/home': {
-            const path = resolve(__dirname,'./pages/home.html');
-
-            readFile(path, (error, file) => {
-                if (error) {
-                    response.writeHead(500, 'Can\'t process HTML file.');
-                    response.end();
-                    return;
-                }
-
-                response.writeHead(200);
-                response.write(file);
-                response.end();
-            });
-            break;
-        }
-
-        default: {
-            response.writeHead(404, 'Server not found.');
-            response.end();
-        }
-    }
+server.post('/authenticate', express.json(), (request, response) => {
+    console.log(
+        'E-mail', request.body.email,
+        'Password', request.body.password
+    );
+    response.send();
 });
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 8000;
-const HOSTNAME = process.env.HOSTNAME || '127.0.0.1';  
+const HOSTNAME = process.env.HOSTNAME || '127.0.0.1';
 
 server.listen(PORT, HOSTNAME, () => {
     console.log(`Server is listening at http://${HOSTNAME}:${PORT}.`)
